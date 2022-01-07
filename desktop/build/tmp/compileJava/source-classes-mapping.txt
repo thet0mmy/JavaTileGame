@@ -1,0 +1,2 @@
+page/rightshift/tilegame/desktop/DesktopLauncher.java
+ page.rightshift.tilegame.desktop.DesktopLauncher
