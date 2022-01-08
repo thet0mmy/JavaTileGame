@@ -14,12 +14,14 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import org.graalvm.compiler.lir.amd64.AMD64Move;
 
 public class TileGame extends ApplicationAdapter implements InputProcessor {
 	SpriteBatch batch;
 
 	BitmapFont font;
 	Label label;
+	Label poslabel;
 	Label.LabelStyle style;
 	Stage stage;
 
@@ -28,11 +30,12 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 	TiledMap tiledMap;
 	OrthographicCamera camera;
 	TiledMapRenderer tiledMapRenderer;
+
 	String selectedTileText = "Tile: 1";
+	String posLabelText = "0,0";
 
 	int currentBuildTile = 1;
 	int currentTileId;
-	boolean isPossiblyStuck = false;
 
 	TiledMapTileLayer.Cell currentTileCell;
 	Vector2 tilepos;
@@ -64,9 +67,12 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		style = new Label.LabelStyle();
 		style.font = font;
 		label = new Label("Tile: 1",style);
-		label.setPosition(0, 462);
+		poslabel = new Label("0,0", style);
+		label.setPosition(0, Gdx.graphics.getHeight() - 16);
+		poslabel.setPosition(0, Gdx.graphics.getHeight() - 32);
 
 		stage.addActor(label);
+		stage.addActor(poslabel);
 	}
 
 	@Override
@@ -81,6 +87,8 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		selectedTileText = "Tile: " + currentBuildTile;
 		label.setText(selectedTileText);
 
+		posLabelText = "" + (int)tilepos.x + "," + (int)tilepos.y;
+		poslabel.setText(posLabelText);
 
 		batch.begin();
 		stage.draw();
@@ -117,53 +125,33 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 	private boolean isMoveAllowed(int dir) {
 		TiledMapTileLayer layer = (TiledMapTileLayer) tiledMap.getLayers().get("base");
 
-		switch (dir) {
-			case 1:
-				try {
-					if ((int) tilepos.x - 1 > 0) {
-						if ((boolean) layer.getCell((int) tilepos.x - 1, (int) tilepos.y).getTile().getProperties().get("solid")) {
-							return false;
-						}
-					}
-				} catch (NullPointerException e) {
-					return true;
-				}
-			case 2:
-				try {
-					if ((int) tilepos.x + 1 < 16) {
-						if ((boolean) layer.getCell((int) tilepos.x + 1, (int) tilepos.y).getTile().getProperties().get("solid")) {
-							return false;
-						}
-					}
-				} catch (NullPointerException e) {
-					return true;
-				}
-			case 3:
-				try {
-					if ((int) tilepos.y - 1 > 0) {
-						if(!isPossiblyStuck) {
-							if ((boolean) layer.getCell((int) tilepos.x, (int) tilepos.y - 1).getTile().getProperties().get("solid")) {
-								return false;
-							}
-						} else if (isPossiblyStuck) {
-							isPossiblyStuck = false;
-							return true;
-						}
-					}
-				} catch (NullPointerException e) {
-					return true;
-				}
-			case 4:
-				try {
-					if ((int) tilepos.y + 1 < 16) {
-						if ((boolean) layer.getCell((int) tilepos.x, (int) tilepos.y + 1).getTile().getProperties().get("solid")) {
-							isPossiblyStuck = true;
-							return false;
-						}
-					}
-				} catch (NullPointerException e) {
-					return true;
-				}
+		boolean agj_up = false;
+		boolean agj_down = false;
+		boolean agj_left = false;
+		boolean agj_right = false;
+
+		try {
+			agj_up = (boolean) layer.getCell((int) tilepos.x, (int) tilepos.y + 1).getTile().getProperties().get("solid");
+			agj_down = (boolean) layer.getCell((int) tilepos.x, (int) tilepos.y - 1).getTile().getProperties().get("solid");
+			agj_left = (boolean) layer.getCell((int) tilepos.x - 1, (int) tilepos.y).getTile().getProperties().get("solid");
+			agj_right = (boolean) layer.getCell((int) tilepos.x + 1, (int) tilepos.y).getTile().getProperties().get("solid");
+		} catch (NullPointerException e) {
+			System.out.println("NullPointerException in isMoveAllowed(int) trying to get adjacent tiles");
+		}
+
+		try {
+			switch(dir) {
+				case 1:
+					return !agj_left;
+				case 2:
+					return !agj_right;
+				case 3:
+					return !agj_up;
+				case 4:
+					return !agj_down;
+			}
+		} catch (NullPointerException e) {
+			System.out.println("NullPointerException in isMoveAllowed(int)");
 		}
 
 		return true;
@@ -189,13 +177,13 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 			}
 		}
 		if(keycode == Input.Keys.DOWN) {
-			if(isMoveAllowed(3)) {
+			if(isMoveAllowed(4)) {
 				camera.translate(0, -64);
 				campos.y -= 64;
 			}
 		}
 		if(keycode == Input.Keys.UP) {
-			if(isMoveAllowed(4)) {
+			if(isMoveAllowed(3)) {
 				camera.translate(0, 64);
 				campos.y += 64;
 			}
