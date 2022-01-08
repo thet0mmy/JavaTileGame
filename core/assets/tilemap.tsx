@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.5" tiledversion="1.7.2" name="tilemap" tilewidth="64" tileheight="64" tilecount="7" columns="0">
+<tileset version="1.5" tiledversion="1.7.2" name="tilemap" tilewidth="64" tileheight="64" tilecount="8" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <properties>
@@ -42,5 +42,11 @@
    <property name="solid" type="bool" value="true"/>
   </properties>
   <image width="64" height="64" source="metal.png"/>
+ </tile>
+ <tile id="7">
+  <properties>
+   <property name="solid" type="bool" value="false"/>
+  </properties>
+  <image width="64" height="64" source="empty.png"/>
  </tile>
 </tileset>

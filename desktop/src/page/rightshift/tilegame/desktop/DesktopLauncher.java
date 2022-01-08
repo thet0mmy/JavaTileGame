@@ -9,7 +9,7 @@ public class DesktopLauncher {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 
 		config.setResizable(true);
-		config.setWindowSizeLimits(1024,768,1024,768);
+		config.setWindowSizeLimits(1024, 768,1024,768);
 		config.setForegroundFPS(30);
 		config.setTitle("tilegame");
 
