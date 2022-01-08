@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+option java_package = "page.rightshift.tilegame";
+option java_outer_classname = "TileGame";
+option java_multiple_files = true;
+
+// The game server RPC interface.
+service TileGameService {
+    // The initial connection to the server. Authenticates the user and
+    // retrieves the current game state.
+    rpc Connect (ConnectRequest) returns (ConnectResponse) {}
+    rpc Stream (stream StreamRequest) returns (stream StreamResponse) {}
+}
+
+// Sent to server for initial authentication before the client can start
+// streaming game state.
+message ConnectRequest {
+    // The name of the player.
+    string name = 1;
+    // The player password.
+    string password = 2;
+}
+
+// Returned to the client if authentication is successful.
+message ConnectResponse {
+    // The stream token is needed when starting to stream the game state.
+    // Needs to be included in the "stream_token" header when starting to
+    // stream.
+    string stream_token = 1;
+    // The current state of the game, the client needs to pick up future
+    // changes from the steam.
+    repeated Entity entities = 2;
+}
+
+// Represents an entity in the game that has a given location. Player,
+// monster, e.g.
+message Entity {
+    // Every entity has an identifier.
+    string id = 1;
+
+    // The current location of the entity.
+    Location location = 2;
+
+    // The entity can be one of these.
+    oneof entity {
+        // A player.
+        Player player = 3;
+    }
+}
+
+// A player of the game.
+message Player {
+    // The player name.
+    string name = 1;
+    // The name of the icon that represents the player.
+    string icon_name = 2;
+}
+
+// A location on the game board.
+message Location {
+    int32 x = 1;
+    int32 y = 2;
+}
+
+// A stream request sent from the client to the server.
+message StreamRequest {
+    oneof action {
+        MoveAction move = 1;
+    }
+}
+
+// An action that moves a player in one direction.
+message MoveAction {
+    // The direction to move in.
+    Direction direction = 1;
+}
+
+// The various directions that can be moved in.
+enum Direction {
+    UP = 0;
+    DOWN = 1;
+    LEFT = 2;
+    RIGHT = 3;
+}
+
+// A stream response from the server containing an event about the changed game
+// state.
+message StreamResponse {
+    oneof event {
+        AddEntityEvent add_entity_event = 1;
+        UpdateEntityEvent update_entity_event = 2;
+        RemoveEntityEvent remove_entity_event = 3;
+    }
+}
+
+// A new entity has been added to the game.
+message AddEntityEvent {
+    Entity entity = 1;
+}
+
+// The state of an existing entity has been updated.
+message UpdateEntityEvent {
+    Entity entity = 1;
+}
+
+// An entity has been removed from the game.
+message RemoveEntityEvent {
+    string entity_id = 1;
+}
