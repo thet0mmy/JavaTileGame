@@ -14,7 +14,6 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import org.graalvm.compiler.lir.amd64.AMD64Move;
 
 public class TileGame extends ApplicationAdapter implements InputProcessor {
 	SpriteBatch batch;
