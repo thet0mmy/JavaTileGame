@@ -151,10 +151,10 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		boolean agj_right = false;
 
 		try {
-			agj_up = (boolean) layer.getCell((int) tilepos.x, (int) tilepos.y + 1).getTile().getProperties().get("solid");
-			agj_down = (boolean) layer.getCell((int) tilepos.x, (int) tilepos.y - 1).getTile().getProperties().get("solid");
-			agj_left = (boolean) layer.getCell((int) tilepos.x - 1, (int) tilepos.y).getTile().getProperties().get("solid");
-			agj_right = (boolean) layer.getCell((int) tilepos.x + 1, (int) tilepos.y).getTile().getProperties().get("solid");
+			agj_up = (boolean) layer.getCell((int) campos.x / 64, (int) campos.y / 64 + 1).getTile().getProperties().get("solid");
+			agj_down = (boolean) layer.getCell((int) campos.x / 64, (int) campos.y / 64 - 1).getTile().getProperties().get("solid");
+			agj_left = (boolean) layer.getCell((int) campos.x / 64 - 1, (int) campos.y / 64).getTile().getProperties().get("solid");
+			agj_right = (boolean) layer.getCell((int) campos.x / 64 + 1, (int) campos.y / 64).getTile().getProperties().get("solid");
 		} catch (NullPointerException e) {
 			System.out.println("NullPointerException in isMoveAllowed(int) trying to get adjacent tiles");
 		}
