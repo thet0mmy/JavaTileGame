@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.*;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 
@@ -23,15 +24,15 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 	Label poslabel;
 	Label.LabelStyle style;
 	Stage stage;
-
+	String selectedTileText = "Tile: 1";
+	String posLabelText = "0,0";
+	
 	Texture img;
 	Texture selectedTileTex;
+
 	TiledMap tiledMap;
 	OrthographicCamera camera;
 	TiledMapRenderer tiledMapRenderer;
-
-	String selectedTileText = "Tile: 1";
-	String posLabelText = "0,0";
 
 	int currentBuildTile = 1;
 	int currentTileId;
@@ -39,6 +40,21 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 	TiledMapTileLayer.Cell currentTileCell;
 	Vector2 tilepos;
 	Vector2 campos;
+
+	private void updateText() {
+		selectedTileText = "Tile: " + currentBuildTile;
+		label.setText(selectedTileText);
+
+		posLabelText = "" + (int)tilepos.x + "," + (int)tilepos.y;
+		poslabel.setText(posLabelText);
+	}
+
+	private void updateTileSelection() {
+		Vector3 mousePos_screen = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+		camera.unproject(mousePos_screen);
+		tilepos.x = (float)Math.floor(mousePos_screen.x / 64);
+		tilepos.y = (float)Math.floor(mousePos_screen.y / 64);
+	}
 
 	@Override
 	public void create () {
@@ -79,15 +95,12 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		Gdx.gl.glClearColor(0, 0, 1, 1);
 		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
 		camera.update();
 		tiledMapRenderer.setView(camera);
 		tiledMapRenderer.render();
 
-		selectedTileText = "Tile: " + currentBuildTile;
-		label.setText(selectedTileText);
-
-		posLabelText = "" + (int)tilepos.x + "," + (int)tilepos.y;
-		poslabel.setText(posLabelText);
+		updateText();
 
 		batch.begin();
 		stage.draw();
@@ -100,9 +113,17 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		batch.end();
 
 		TiledMapTileLayer layer = (TiledMapTileLayer) tiledMap.getLayers().get("base");
+		updateTileSelection();
 
-		tilepos.x = (float) Math.floor(campos.x / 64);
-		tilepos.y = (float) Math.floor(campos.y / 64);
+		if(Gdx.input.isTouched()) {
+			if(Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+				try {
+					currentTileCell.setTile(tiledMap.getTileSets().getTile(currentBuildTile));
+				} catch (NullPointerException e) {
+					System.out.println("NullPointerException");
+				}
+			}
+		}
 
 		try {
 			currentTileId = layer.getCell((int) tilepos.x, (int) tilepos.y).getTile().getId();
@@ -163,25 +184,25 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean keyUp(int keycode) {
-		if(keycode == Input.Keys.LEFT) {
+		if(keycode == Input.Keys.A) {
 			if(isMoveAllowed(1)) {
 				camera.translate(-64, 0);
 				campos.x -= 64;
 			}
 		}
-		if(keycode == Input.Keys.RIGHT) {
+		if(keycode == Input.Keys.D) {
 			if(isMoveAllowed(2)) {
 				camera.translate(64, 0);
 				campos.x += 64;
 			}
 		}
-		if(keycode == Input.Keys.DOWN) {
+		if(keycode == Input.Keys.S) {
 			if(isMoveAllowed(4)) {
 				camera.translate(0, -64);
 				campos.y -= 64;
 			}
 		}
-		if(keycode == Input.Keys.UP) {
+		if(keycode == Input.Keys.W) {
 			if(isMoveAllowed(3)) {
 				camera.translate(0, 64);
 				campos.y += 64;
@@ -205,14 +226,6 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 			System.out.println(currentBuildTile);
 		}
 
-		if(keycode == Input.Keys.SPACE) {
-			try {
-				currentTileCell.setTile(tiledMap.getTileSets().getTile(currentBuildTile));
-			} catch (NullPointerException e) {
-				System.out.println("NullPointerException");
-			}
-		}
-
 		if(keycode == Input.Keys.ALT_LEFT) {
 			camera.translate(0, -64);
 			campos.y -= 64;
@@ -224,27 +237,22 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 	public boolean keyTyped(char character) {
 		return false;
 	}
-
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 		return false;
 	}
-
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
 		return false;
 	}
-
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 		return false;
 	}
-
 	@Override
 	public boolean mouseMoved(int screenX, int screenY) {
 		return false;
 	}
-
 	@Override
 	public boolean scrolled(float amountX, float amountY) {
 		return false;
