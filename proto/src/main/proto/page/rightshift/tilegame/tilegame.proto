@@ -1,8 +1,10 @@
 syntax = "proto3";
 
+package tilegame;
+
 option java_package = "page.rightshift.tilegame";
-option java_outer_classname = "TileGame";
-option java_multiple_files = true;
+option java_outer_classname = "Protos";
+option java_multiple_files = false;
 
 // The game server RPC interface.
 service TileGameService {

@@ -1,0 +1,12 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'page.rightshift.tilegame.server.TileGameServer'
+
+dependencies {
+    implementation project(":proto")
+    implementation 'io.grpc:grpc-stub:1.43.2'
+    implementation 'io.grpc:grpc-protobuf:1.43.2'
+    implementation 'io.grpc:grpc-services:1.43.2'
+    runtimeOnly 'io.grpc:grpc-netty:1.43.2'
+}

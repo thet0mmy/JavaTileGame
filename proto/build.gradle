@@ -19,6 +19,11 @@ dependencies {
     implementation 'com.google.protobuf:protobuf-java:3.19.2'
     implementation 'io.grpc:grpc-stub:1.43.2'
     implementation 'io.grpc:grpc-protobuf:1.43.2'
+    if (JavaVersion.current().isJava9Compatible()) {
+        // Workaround for @javax.annotation.Generated
+        // see: https://github.com/grpc/grpc-java/issues/3633
+        implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    }
 }
 
 protobuf {
@@ -32,6 +37,9 @@ protobuf {
     }
     generateProtoTasks {
         all().each { task ->
+            task.plugins {
+                grpc { }
+            }
         }
     }
 }

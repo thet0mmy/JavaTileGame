@@ -64,3 +64,15 @@ project(":core") {
         
     }
 }
+
+project(":proto") {
+    apply plugin: "java-library"
+}
+
+project(":server") {
+    apply plugin: "java-library"
+
+    dependencies {
+        implementation project(":proto")
+    }
+}
