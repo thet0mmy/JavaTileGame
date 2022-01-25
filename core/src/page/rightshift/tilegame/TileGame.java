@@ -7,25 +7,13 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.*;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.*;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
 
 public class TileGame extends ApplicationAdapter implements InputProcessor {
 	SpriteBatch batch;
-
-	BitmapFont font;
-	Label label;
-	Label poslabel;
-	Label.LabelStyle style;
-	Stage stage;
-	String selectedTileText = "Tile: 1";
-	String posLabelText = "0,0";
 	
 	Texture img;
 	Texture selectedTileTex;
@@ -38,22 +26,14 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 	int currentTileId;
 
 	TiledMapTileLayer.Cell currentTileCell;
-	Vector2 tilepos;
-	Vector2 campos;
-
-	private void updateText() {
-		selectedTileText = "Tile: " + currentBuildTile;
-		label.setText(selectedTileText);
-
-		posLabelText = "" + (int)tilepos.x + "," + (int)tilepos.y;
-		poslabel.setText(posLabelText);
-	}
+	Player player;
+	UIManager uiManager;
 
 	private void updateTileSelection() {
 		Vector3 mousePos_screen = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
 		camera.unproject(mousePos_screen);
-		tilepos.x = (float)Math.floor(mousePos_screen.x / 64);
-		tilepos.y = (float)Math.floor(mousePos_screen.y / 64);
+		player.selectedTile.x = (float)Math.floor(mousePos_screen.x / 64);
+		player.selectedTile.y = (float)Math.floor(mousePos_screen.y / 64);
 	}
 
 	@Override
@@ -68,26 +48,13 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
 		Gdx.input.setInputProcessor(this);
 
-		campos = new Vector2();
-
 		batch = new SpriteBatch();
 		img = new Texture("character.png");
 		selectedTileTex = new Texture("tileselect.png");
-		tilepos = new Vector2();
-
 		camera.translate(-256, -192);
-		font = new BitmapFont();
-		stage = new Stage();
 
-		style = new Label.LabelStyle();
-		style.font = font;
-		label = new Label("Tile: 1",style);
-		poslabel = new Label("0,0", style);
-		label.setPosition(0, Gdx.graphics.getHeight() - 16);
-		poslabel.setPosition(0, Gdx.graphics.getHeight() - 32);
-
-		stage.addActor(label);
-		stage.addActor(poslabel);
+		uiManager = new UIManager();
+		player = new Player();
 	}
 
 	@Override
@@ -99,17 +66,12 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		camera.update();
 		tiledMapRenderer.setView(camera);
 		tiledMapRenderer.render();
-
-		updateText();
-
-		batch.begin();
-		stage.draw();
-		batch.end();
+		uiManager.update(player.selectedTile, currentBuildTile);
+		player.draw(img, camera);
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
-		batch.draw(img, campos.x, campos.y);
-		batch.draw(selectedTileTex, tilepos.x * 64, tilepos.y * 64);
+		batch.draw(selectedTileTex, player.selectedTile.x * 64, player.selectedTile.y * 64);
 		batch.end();
 
 		TiledMapTileLayer layer = (TiledMapTileLayer) tiledMap.getLayers().get("base");
@@ -126,11 +88,11 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		}
 
 		try {
-			currentTileId = layer.getCell((int) tilepos.x, (int) tilepos.y).getTile().getId();
+			currentTileId = layer.getCell((int) player.selectedTile.x, (int) player.selectedTile.y).getTile().getId();
 		} catch(NullPointerException e) {
 			// a
 		}
-		currentTileCell = layer.getCell((int)tilepos.x, (int)tilepos.y);
+		currentTileCell = layer.getCell((int)player.selectedTile.x, (int)player.selectedTile.y);
 	}
 
 	@Override
@@ -140,6 +102,7 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		batch.dispose();
 
 		tiledMap.dispose();
+		uiManager.dispose();
 	}
 
 	private boolean isMoveAllowed(int dir) {
@@ -151,10 +114,10 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		boolean agj_right = false;
 
 		try {
-			agj_up = (boolean) layer.getCell((int) campos.x / 64, (int) campos.y / 64 + 1).getTile().getProperties().get("solid");
-			agj_down = (boolean) layer.getCell((int) campos.x / 64, (int) campos.y / 64 - 1).getTile().getProperties().get("solid");
-			agj_left = (boolean) layer.getCell((int) campos.x / 64 - 1, (int) campos.y / 64).getTile().getProperties().get("solid");
-			agj_right = (boolean) layer.getCell((int) campos.x / 64 + 1, (int) campos.y / 64).getTile().getProperties().get("solid");
+			agj_up = (boolean) layer.getCell((int) player.pos.x, (int) player.pos.y + 1).getTile().getProperties().get("solid");
+			agj_down = (boolean) layer.getCell((int) player.pos.x, (int) player.pos.y - 1).getTile().getProperties().get("solid");
+			agj_left = (boolean) layer.getCell((int) player.pos.x - 1, (int) player.pos.y).getTile().getProperties().get("solid");
+			agj_right = (boolean) layer.getCell((int) player.pos.x + 1, (int) player.pos.y).getTile().getProperties().get("solid");
 		} catch (NullPointerException e) {
 			System.out.println("NullPointerException in isMoveAllowed(int) trying to get adjacent tiles");
 		}
@@ -187,25 +150,25 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		if(keycode == Input.Keys.A) {
 			if(isMoveAllowed(1)) {
 				camera.translate(-64, 0);
-				campos.x -= 64;
+				player.pos.x -= 1;
 			}
 		}
 		if(keycode == Input.Keys.D) {
 			if(isMoveAllowed(2)) {
 				camera.translate(64, 0);
-				campos.x += 64;
+				player.pos.x += 1;
 			}
 		}
 		if(keycode == Input.Keys.S) {
 			if(isMoveAllowed(4)) {
 				camera.translate(0, -64);
-				campos.y -= 64;
+				player.pos.y -= 1;
 			}
 		}
 		if(keycode == Input.Keys.W) {
 			if(isMoveAllowed(3)) {
 				camera.translate(0, 64);
-				campos.y += 64;
+				player.pos.y += 1;
 			}
 		}
 
@@ -228,7 +191,7 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 
 		if(keycode == Input.Keys.ALT_LEFT) {
 			camera.translate(0, -64);
-			campos.y -= 64;
+			player.pos.y -= 1;
 		}
 		return false;
 	}

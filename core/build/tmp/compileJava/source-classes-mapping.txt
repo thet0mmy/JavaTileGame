@@ -1,2 +1,6 @@
+page/rightshift/tilegame/UIManager.java
+ page.rightshift.tilegame.UIManager
+page/rightshift/tilegame/Player.java
+ page.rightshift.tilegame.Player
 page/rightshift/tilegame/TileGame.java
  page.rightshift.tilegame.TileGame
