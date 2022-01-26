@@ -15,17 +15,15 @@ import com.badlogic.gdx.math.Vector3;
 public class TileGame extends ApplicationAdapter implements InputProcessor {
 	SpriteBatch batch;
 	
-	Texture img;
+	Texture playerTexture;
 	Texture selectedTileTex;
 
 	TiledMap tiledMap;
 	OrthographicCamera camera;
 	TiledMapRenderer tiledMapRenderer;
 
-	int currentBuildTile = 1;
-	int currentTileId;
-
 	TiledMapTileLayer.Cell currentTileCell;
+
 	Player player;
 	UIManager uiManager;
 
@@ -49,7 +47,7 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		Gdx.input.setInputProcessor(this);
 
 		batch = new SpriteBatch();
-		img = new Texture("character.png");
+		playerTexture = new Texture("character.png");
 		selectedTileTex = new Texture("tileselect.png");
 		camera.translate(-256, -192);
 
@@ -66,8 +64,8 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		camera.update();
 		tiledMapRenderer.setView(camera);
 		tiledMapRenderer.render();
-		uiManager.update(player.selectedTile, currentBuildTile);
-		player.draw(img, camera);
+		uiManager.update(player);
+		player.draw(playerTexture, camera);
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
@@ -80,64 +78,24 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 		if(Gdx.input.isTouched()) {
 			if(Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
 				try {
-					currentTileCell.setTile(tiledMap.getTileSets().getTile(currentBuildTile));
+					currentTileCell.setTile(tiledMap.getTileSets().getTile(player.buildType));
 				} catch (NullPointerException e) {
 					System.out.println("NullPointerException");
 				}
 			}
 		}
 
-		try {
-			currentTileId = layer.getCell((int) player.selectedTile.x, (int) player.selectedTile.y).getTile().getId();
-		} catch(NullPointerException e) {
-			// a
-		}
 		currentTileCell = layer.getCell((int)player.selectedTile.x, (int)player.selectedTile.y);
 	}
 
 	@Override
 	public void dispose() {
 		selectedTileTex.dispose();
-		img.dispose();
+		playerTexture.dispose();
 		batch.dispose();
 
 		tiledMap.dispose();
 		uiManager.dispose();
-	}
-
-	private boolean isMoveAllowed(int dir) {
-		TiledMapTileLayer layer = (TiledMapTileLayer) tiledMap.getLayers().get("base");
-
-		boolean agj_up = false;
-		boolean agj_down = false;
-		boolean agj_left = false;
-		boolean agj_right = false;
-
-		try {
-			agj_up = (boolean) layer.getCell((int) player.pos.x, (int) player.pos.y + 1).getTile().getProperties().get("solid");
-			agj_down = (boolean) layer.getCell((int) player.pos.x, (int) player.pos.y - 1).getTile().getProperties().get("solid");
-			agj_left = (boolean) layer.getCell((int) player.pos.x - 1, (int) player.pos.y).getTile().getProperties().get("solid");
-			agj_right = (boolean) layer.getCell((int) player.pos.x + 1, (int) player.pos.y).getTile().getProperties().get("solid");
-		} catch (NullPointerException e) {
-			System.out.println("NullPointerException in isMoveAllowed(int) trying to get adjacent tiles");
-		}
-
-		try {
-			switch(dir) {
-				case 1:
-					return !agj_left;
-				case 2:
-					return !agj_right;
-				case 3:
-					return !agj_up;
-				case 4:
-					return !agj_down;
-			}
-		} catch (NullPointerException e) {
-			System.out.println("NullPointerException in isMoveAllowed(int)");
-		}
-
-		return true;
 	}
 
 	@Override
@@ -147,26 +105,28 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean keyUp(int keycode) {
+		TiledMapTileLayer layer = (TiledMapTileLayer) tiledMap.getLayers().get("base");
+
 		if(keycode == Input.Keys.A) {
-			if(isMoveAllowed(1)) {
+			if(CollisionHandler.isMoveAllowed(1, layer, player)) {
 				camera.translate(-64, 0);
 				player.pos.x -= 1;
 			}
 		}
 		if(keycode == Input.Keys.D) {
-			if(isMoveAllowed(2)) {
+			if(CollisionHandler.isMoveAllowed(2, layer, player)) {
 				camera.translate(64, 0);
 				player.pos.x += 1;
 			}
 		}
 		if(keycode == Input.Keys.S) {
-			if(isMoveAllowed(4)) {
+			if(CollisionHandler.isMoveAllowed(4, layer, player)) {
 				camera.translate(0, -64);
 				player.pos.y -= 1;
 			}
 		}
 		if(keycode == Input.Keys.W) {
-			if(isMoveAllowed(3)) {
+			if(CollisionHandler.isMoveAllowed(3, layer, player)) {
 				camera.translate(0, 64);
 				player.pos.y += 1;
 			}
@@ -178,15 +138,15 @@ public class TileGame extends ApplicationAdapter implements InputProcessor {
 			tiledMap.getLayers().get(1).setVisible(!tiledMap.getLayers().get(1).isVisible());
 
 		if(keycode == Input.Keys.CONTROL_LEFT) {
-			if(currentBuildTile - 1 > 0)
-				currentBuildTile--;
+			if(player.buildType - 1 > 0)
+				player.buildType--;
 
-			System.out.println(currentBuildTile);
+			System.out.println(player.buildType);
 		}
 
 		if(keycode == Input.Keys.SHIFT_LEFT) {
-			currentBuildTile++;
-			System.out.println(currentBuildTile);
+			player.buildType++;
+			System.out.println(player.buildType);
 		}
 
 		if(keycode == Input.Keys.ALT_LEFT) {

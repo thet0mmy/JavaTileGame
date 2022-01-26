@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 public class Player {
     public Vector2 pos;
     public Vector2 selectedTile;
+    public int buildType;
     private final SpriteBatch batch;
 
     public Vector2 toPixelPos() {

@@ -10,5 +10,5 @@ public class Constants {
   public static final int BOARD_WIDTH = 100;
   public static final int BOARD_HEIGHT = 100;
 
-  public static final Context.Key<String> STREAM_TOKEN_CONTEXT_KEY = Context.key("stream-token");
+  public static final Context.Key<String> STREAM_ID_CONTEXT_KEY = Context.key("stream-id");
 }

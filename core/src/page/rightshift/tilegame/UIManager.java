@@ -18,9 +18,9 @@ public class UIManager {
 
     public Stage stage;
 
-    void update(Vector2 pos, int buildType) {
-        tileLabelString = "Tile: " + buildType;
-        posLabelString = "Pos: (" + (int)pos.x + ", " + (int)pos.y + ")";
+    void update(Player player) {
+        tileLabelString = "Tile: " + player.buildType;
+        posLabelString = "Pos: (" + (int)player.pos.x + ", " + (int)player.pos.y + ")";
 
         tileLabel.setText(tileLabelString);
         posLabel.setText(posLabelString);
