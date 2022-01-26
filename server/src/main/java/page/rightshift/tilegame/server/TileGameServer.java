@@ -20,7 +20,8 @@ import java.util.logging.Logger;
  */
 public class TileGameServer {
 
-  private static final Metadata.Key<String> STREAM_ID_METADATA_KEY = Metadata.Key.of("stream-id",
+  private static final Metadata.Key<String> STREAM_TOKEN_METADATA_KEY = Metadata.Key.of(
+      "stream-token",
       ASCII_STRING_MARSHALLER);
   private static final String STREAM_METHOD_NAME = "Stream";
 
@@ -50,8 +51,8 @@ public class TileGameServer {
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall,
         Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
-      String streamId = metadata.get(STREAM_ID_METADATA_KEY);
-      Context ctx = Context.current().withValue(Constants.STREAM_ID_CONTEXT_KEY, streamId);
+      String streamId = metadata.get(STREAM_TOKEN_METADATA_KEY);
+      Context ctx = Context.current().withValue(Constants.STREAM_TOKEN_CONTEXT_KEY, streamId);
 
       return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
     }

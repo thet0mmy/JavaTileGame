@@ -25,33 +25,37 @@ public class TileGameService extends TileGameServiceImplBase {
   private List<Entity> entities = new ArrayList<>();
 
   // Players need to be able to be looked up with the stream key
-  private Map<String, Player> playersByStreamId = new HashMap<>();
+  private Map<String, Player> playersByStreamToken = new HashMap<>();
 
   @Override
   public void connect(Protos.ConnectRequest request,
       StreamObserver<Protos.ConnectResponse> responseObserver) {
+    logger.info("connect called");
+
     // TODO: add authentication, for now just assign a stream ID.
-    String streamId = UUID.randomUUID().toString();
+    String streamToken = UUID.randomUUID().toString();
 
     // A new entity is needed to represent the new player.
     Player player = new Player(UUID.randomUUID().toString(), new Entity.Location(0, 0),
         request.getName());
     entities.add(player);
-    playersByStreamId.put(streamId, player);
+    playersByStreamToken.put(streamToken, player);
 
-    // Return the stream ID to the client so that they can make a stream call with it.
+    // Return the stream token to the client so that they can make a stream call with it.
     responseObserver.onNext(
-        Protos.ConnectResponse.newBuilder().setStreamToken(streamId).build());
+        Protos.ConnectResponse.newBuilder().setStreamToken(streamToken).build());
     responseObserver.onCompleted();
   }
 
   @Override
   public StreamObserver<Protos.StreamRequest> stream(
       StreamObserver<Protos.StreamResponse> responseObserver) {
-    // Make sure we have a valid stream ID to retrieve a player with.
-    String streamId = Constants.STREAM_ID_CONTEXT_KEY.get();
-    if (!playersByStreamId.containsKey(streamId)) {
-      throw new IllegalArgumentException("no valid stream-id provided");
+    logger.info("stream called");
+
+    // Make sure we have a valid stream token to retrieve a player with.
+    String streamToken = Constants.STREAM_TOKEN_CONTEXT_KEY.get();
+    if (!playersByStreamToken.containsKey(streamToken)) {
+      throw new IllegalArgumentException("no valid stream-token provided");
     }
 
     // Newly connected clients get stored in a list so that they can be sent updates later.
@@ -68,9 +72,9 @@ public class TileGameService extends TileGameServiceImplBase {
     return new StreamObserver<Protos.StreamRequest>() {
       @Override
       public void onNext(Protos.StreamRequest request) {
-        logger.info("Stream request received");
+        logger.info("stream onNext");
 
-        Player player = playersByStreamId.get(Constants.STREAM_ID_CONTEXT_KEY.get());
+        Player player = playersByStreamToken.get(Constants.STREAM_TOKEN_CONTEXT_KEY.get());
 
         // We only support move actions for now and assume the request has one...
         player.move(request.getMove().getDirection());
