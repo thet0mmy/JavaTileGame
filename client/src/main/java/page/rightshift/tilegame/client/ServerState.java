@@ -79,7 +79,7 @@ public class ServerState {
   /**
    * Called when the state on the server changes.
    */
-  interface ServerStateListener {
+  public interface ServerStateListener {
 
     /**
      * A new entity was added.

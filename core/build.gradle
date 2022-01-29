@@ -1,5 +1,7 @@
-sourceCompatibility = 1.7
+sourceCompatibility = 14
 dependencies {
+    implementation project(":proto")
+    implementation project(":client")
     implementation 'org.jetbrains:annotations-java5:20.1.0'
 }
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
