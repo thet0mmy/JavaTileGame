@@ -77,6 +77,13 @@ public class ServerState {
   }
 
   /**
+   * Disconnect the {@link ServerState} from the server.
+   */
+  public void disconnect() {
+    clientStreamObserver.onCompleted();
+  }
+
+  /**
    * Called when the state on the server changes.
    */
   public interface ServerStateListener {

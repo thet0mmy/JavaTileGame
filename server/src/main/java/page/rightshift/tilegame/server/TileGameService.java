@@ -21,6 +21,9 @@ public class TileGameService extends TileGameServiceImplBase {
   // The StreamObservers for all the connected clients.
   private List<StreamObserver<Protos.StreamResponse>> clientStreamObservers = new ArrayList<>();
 
+  private Map<String, StreamObserver<Protos.StreamResponse>> clientStreamObserversByStreamToken =
+      new HashMap<>();
+
   // All the entites in play.
   private List<Entity> entities = new ArrayList<>();
 
@@ -54,18 +57,23 @@ public class TileGameService extends TileGameServiceImplBase {
 
     // Make sure we have a valid stream token to retrieve a player with.
     String streamToken = Constants.STREAM_TOKEN_CONTEXT_KEY.get();
+
     if (!playersByStreamToken.containsKey(streamToken)) {
       throw new IllegalArgumentException("no valid stream-token provided");
     }
 
     // Newly connected clients get stored in a list so that they can be sent updates later.
     clientStreamObservers.add(responseObserver);
+    clientStreamObserversByStreamToken.put(streamToken, responseObserver);
 
-    // The client should add all the current entities to get started.
+    // The client should add all the current (except the player) entities to get started.
+    Player player = playersByStreamToken.get(Constants.STREAM_TOKEN_CONTEXT_KEY.get());
     for (Entity entity : entities) {
-      responseObserver.onNext(Protos.StreamResponse.newBuilder()
-          .setAddEntityEvent(Protos.AddEntityEvent.newBuilder().setEntity(entity.toProto()))
-          .build());
+      if (entity != player) {
+        responseObserver.onNext(Protos.StreamResponse.newBuilder()
+            .setAddEntityEvent(Protos.AddEntityEvent.newBuilder().setEntity(entity.toProto()))
+            .build());
+      }
     }
 
     // Now we start accepting updates from the client.
@@ -74,16 +82,19 @@ public class TileGameService extends TileGameServiceImplBase {
       public void onNext(Protos.StreamRequest request) {
         logger.info("stream onNext");
 
-        Player player = playersByStreamToken.get(Constants.STREAM_TOKEN_CONTEXT_KEY.get());
+        String streamToken = Constants.STREAM_TOKEN_CONTEXT_KEY.get();
+        Player player = playersByStreamToken.get(streamToken);
 
         // We only support move actions for now and assume the request has one...
         player.move(request.getMove().getDirection());
 
-        // Send new player location to all clients.
+        // Send new player location to all clients except the one that triggered the move.
         for (StreamObserver<Protos.StreamResponse> client : clientStreamObservers) {
-          client.onNext(Protos.StreamResponse.newBuilder().setUpdateEntityEvent(
-              Protos.UpdateEntityEvent.newBuilder().setEntity(player.toProto())).build());
-          client.onCompleted();
+          if (client != clientStreamObserversByStreamToken.get(streamToken)) {
+            client.onNext(Protos.StreamResponse.newBuilder().setUpdateEntityEvent(
+                Protos.UpdateEntityEvent.newBuilder().setEntity(player.toProto())).build());
+            client.onCompleted();
+          }
         }
       }
 
@@ -94,6 +105,7 @@ public class TileGameService extends TileGameServiceImplBase {
         // The stream has failed and is closing, let's remove the client from the list, so we don't
         // try to send it further updates.
         clientStreamObservers.remove(responseObserver);
+        removePlayer();
       }
 
       @Override
@@ -103,6 +115,20 @@ public class TileGameService extends TileGameServiceImplBase {
         // The client is done streaming and will disconnect, remove it from the list, so we don't
         // send it further updates.
         clientStreamObservers.remove(responseObserver);
+        removePlayer();
+      }
+
+      // Remove the player from server state and notify of its removal to all clients
+      private void removePlayer() {
+        Player player = playersByStreamToken.get(Constants.STREAM_TOKEN_CONTEXT_KEY.get());
+        logger.log(Level.INFO, "removing player {0}", player.getId());
+        entities.remove(player);
+
+        for (StreamObserver<Protos.StreamResponse> client : clientStreamObservers) {
+          client.onNext(Protos.StreamResponse.newBuilder().setRemoveEntityEvent(
+              Protos.RemoveEntityEvent.newBuilder().setEntityId(player.getId())).build());
+          client.onCompleted();
+        }
       }
     };
   }

@@ -7,6 +7,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.MetadataUtils;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import page.rightshift.tilegame.Protos.ConnectRequest;
@@ -44,7 +45,8 @@ public class TileGameServiceClient {
   public static void main(String args[]) throws InterruptedException {
     logger.info("making test call");
 
-    ServerState serverState = new TileGameServiceClient("localhost", 8888).connect("foo", "bar",
+    TileGameServiceClient client = new TileGameServiceClient("localhost", 8888);
+    ServerState serverState = client.connect("foo", "bar",
         new ServerStateListener() {
           @Override
           public void entityAdded(Entity entity) {
@@ -75,6 +77,8 @@ public class TileGameServiceClient {
     serverState.move(Direction.UP);
 
     Thread.sleep(2000);
+
+    serverState.disconnect();
   }
 
   public ServerState connect(String name, String password, ServerStateListener listener)
@@ -95,5 +99,10 @@ public class TileGameServiceClient {
         TileGameServiceGrpc.newStub(channel), listener);
 
     return serverState;
+  }
+
+  public void disconnect() throws InterruptedException {
+    channel.shutdown();
+    channel.awaitTermination(1, TimeUnit.SECONDS);
   }
 }
